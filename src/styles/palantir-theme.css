@@ -1,0 +1,486 @@
+/* Palantir Visualization Theme - Dark Mode */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Baltic Sea Tracker specific styles */
+.baltic-tracker-container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar styling */
+.sidebar {
+  background-color: rgba(15, 20, 25, 0.95) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: 2px 0 15px rgba(0, 0, 0, 0.4);
+  padding: 1rem;
+  overflow-y: auto;
+  color: #e0e0e0;
+  border-right: 1px solid rgba(75, 75, 75, 0.3);
+  font-size: 0.9rem;
+}
+
+.palantir-heading {
+  color: #4285F4;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Control panel styling */
+.control-panel {
+  background-color: rgba(28, 32, 38, 0.7);
+  border: 1px solid rgba(75, 75, 75, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  backdrop-filter: blur(5px);
+}
+
+/* Button container */
+.control-panel div.flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* Button styling */
+.control-panel button {
+  background-color: rgba(40, 44, 52, 0.8);
+  color: #e0e0e0;
+  border: 1px solid rgba(75, 75, 75, 0.5);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  margin-right: 0rem;
+  margin-bottom: 0rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.control-panel button:hover {
+  background-color: rgba(60, 64, 72, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.control-panel button.active {
+  background-color: #4285F4;
+  color: white;
+  border-color: #2662C7;
+}
+
+/* Reset button styling */
+.reset-button {
+  background-color: #8B0000 !important;
+  color: #FFFFFF !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.25rem !important;
+  border: none !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.2s ease;
+}
+
+.reset-button:hover {
+  background-color: #a50000 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Map container */
+.map-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Sidebar */
+.sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100%;
+  background-color: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  overflow-y: auto;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.sidebar-collapsed {
+  transform: translateX(-100%);
+}
+
+/* Controls */
+.controls {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 5;
+}
+
+.control-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(30, 30, 30, 0.8);
+  backdrop-filter: blur(5px);
+  border: 1px solid #333;
+  cursor: pointer;
+  color: #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.control-button:hover {
+  background-color: rgba(50, 50, 50, 0.9);
+  transform: translateY(-2px);
+}
+
+.control-button.active {
+  background-color: #0073e6;
+  border-color: #0088ff;
+  color: white;
+}
+
+/* Vessel marker styling */
+.vessel-marker {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #00ff88;
+  border: 2px solid #005c31;
+}
+
+.vessel-marker.military {
+  background-color: #ff3b30;
+  border-color: #8d1007;
+}
+
+.vessel-marker.commercial {
+  background-color: #00ff88;
+  border-color: #005c31;
+}
+
+.vessel-marker.passenger {
+  background-color: #007aff;
+  border-color: #00366b;
+}
+
+.vessel-marker.fishing {
+  background-color: #ffcc00;
+  border-color: #664f00;
+}
+
+.vessel-marker.tanker {
+  background-color: #9d44b5;
+  border-color: #5a1d6d;
+}
+
+/* Info windows */
+.info-window {
+  background-color: rgba(30, 30, 30, 0.9);
+  border-radius: 8px;
+  padding: 12px;
+  max-width: 250px;
+  backdrop-filter: blur(10px);
+  border: 1px solid #444;
+  color: #e0e0e0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.info-window h3 {
+  margin-top: 0;
+  color: white;
+  font-size: 16px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 8px;
+}
+
+.info-window p {
+  margin: 6px 0;
+  font-size: 13px;
+}
+
+/* Vessel list */
+.vessel-list {
+  padding: 10px;
+}
+
+.vessel-list-header {
+  padding: 15px;
+  border-bottom: 1px solid #333;
+}
+
+.vessel-list-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.vessel-list-filters {
+  display: flex;
+  gap: 8px;
+  padding: 10px 15px;
+  flex-wrap: wrap;
+}
+
+.filter-button {
+  padding: 6px 12px;
+  background-color: #333;
+  border: none;
+  border-radius: 16px;
+  color: #e0e0e0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-button:hover {
+  background-color: #444;
+}
+
+.filter-button.active {
+  background-color: #0073e6;
+  color: white;
+}
+
+.vessel-list-items {
+  padding: 5px 0;
+}
+
+.vessel-list-item {
+  padding: 10px 15px;
+  border-bottom: 1px solid #292929;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.vessel-list-item:hover {
+  background-color: #252525;
+}
+
+.vessel-list-item.selected {
+  background-color: #1a3c65;
+}
+
+.vessel-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.vessel-details {
+  font-size: 12px;
+  color: #aaa;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Display mode switcher */
+.display-modes {
+  position: absolute;
+  left: 15px;
+  bottom: 15px;
+  display: flex;
+  gap: 10px;
+  z-index: 5;
+}
+
+.mode-button {
+  padding: 8px 16px;
+  background-color: rgba(30, 30, 30, 0.8);
+  backdrop-filter: blur(5px);
+  border: 1px solid #333;
+  border-radius: 20px;
+  color: #e0e0e0;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mode-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mode-button:hover {
+  background-color: rgba(50, 50, 50, 0.9);
+  transform: translateY(-2px);
+}
+
+.mode-button.active {
+  background-color: #0073e6;
+  border-color: #0088ff;
+  color: white;
+}
+
+/* Style for layer controls */
+.layer-controls {
+  position: absolute;
+  right: 15px;
+  bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: rgba(30, 30, 30, 0.8);
+  backdrop-filter: blur(5px);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+  z-index: 5;
+}
+
+.layer-control-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.layer-checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #666;
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+}
+
+.layer-checkbox:checked {
+  background-color: #0073e6;
+  border-color: #0088ff;
+}
+
+.layer-checkbox:checked::after {
+  content: "✓";
+  position: absolute;
+  top: -2px;
+  left: 2px;
+  color: white;
+  font-size: 14px;
+}
+
+/* Animation and transition effects */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.pulse {
+  animation: pulse 1.5s infinite;
+}
+
+/* Tooltip styling */
+.tooltip {
+  position: absolute;
+  background-color: rgba(30, 30, 30, 0.9);
+  color: #e0e0e0;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 1000;
+  transform: translate(-50%, -100%);
+  margin-top: -8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Slider inputs */
+input[type="range"] {
+  -webkit-appearance: none;
+  height: 4px;
+  background: #2c3440;
+  border-radius: 2px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4285F4;
+  cursor: pointer;
+  border: 2px solid #1c2028;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4285F4;
+  cursor: pointer;
+  border: 2px solid #1c2028;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Status bar */
+.bg-gray-800 {
+  background-color: rgba(28, 32, 38, 0.95) !important;
+  backdrop-filter: blur(5px);
+  border-top: 1px solid rgba(75, 75, 75, 0.3);
+}
+
+/* Progress indicators */
+.progress-bar {
+  background-color: #1c2028;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-value {
+  height: 100%;
+  border-radius: 4px;
+  background-color: #4285F4;
+}
+
+/* Circle components */
+.detection-circle {
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: white;
+  margin-right: 0.5rem;
+} 
