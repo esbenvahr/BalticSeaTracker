@@ -276,6 +276,14 @@ const BalticSeaTracker = () => {
     const maxAttempts = 600; // Increase attempts to find valid positions
     let placedVesselCount = 0;
     
+    // Track vessel type counts for balancing
+    let russianShipCount = 0;
+    let militaryVesselCount = 0;
+    
+    // Maximum counts (adjust to double Russian ships and reduce military vessels)
+    const MAX_RUSSIAN_SHIPS = 60; // Doubled from previous count
+    const MAX_MILITARY_VESSELS = 40; // Reduced from previous count
+    
     // Try to place vessels with appropriate spacing
     for (let i = 1; placedVesselCount < 300 && i <= maxAttempts; i++) {
       const initialType = vesselTypes[Math.floor(Math.random() * vesselTypes.length)];
@@ -291,11 +299,27 @@ const BalticSeaTracker = () => {
       let vesselType = initialType;
       
       // All Russian flag vessels should be marked as "Russian Ships"
-      if (isRussian && (vesselType === 'commercial' || vesselType === 'military')) {
-        vesselType = 'russian'; // Set type to 'russian' for all Russian commercial and military vessels
+      if (isRussian && (vesselType === 'commercial' || vesselType === 'military' || vesselType === 'tanker')) {
+        // Check if we've reached our maximum Russian Ships count
+        if (russianShipCount >= MAX_RUSSIAN_SHIPS) {
+          continue; // Skip this attempt
+        }
+        vesselType = 'russian'; // Set type to 'russian' for all Russian commercial, military and tanker vessels
+        russianShipCount++;
+      } else if (vesselType === 'military') {
+        // Check if we've reached our maximum Military vessels count
+        if (militaryVesselCount >= MAX_MILITARY_VESSELS) {
+          continue; // Skip this attempt
+        }
+        militaryVesselCount++;
       } else if (!isRussian && Math.random() < 0.05) { // 5% chance of non-Russian flag but Russian operated
         // These will be military vessels with Russian operators but not marked as Russian ships
-        vesselType = 'military'; 
+        // Check if we've reached our maximum Military vessels count
+        if (militaryVesselCount >= MAX_MILITARY_VESSELS) {
+          continue; // Skip this attempt
+        }
+        vesselType = 'military';
+        militaryVesselCount++;
       }
       
       // Get a potential position for the vessel
@@ -571,23 +595,81 @@ const BalticSeaTracker = () => {
       'Okhotnik', 'Grom', 'Kronshtadt', 'Sirius'
     ];
     
+    // Define Baltic Sea safe water areas for drone starting positions
+    const balticSeaSafeWaters = [
+      // Central Baltic 
+      {minLat: 55.0, maxLat: 60.0, minLng: 17.0, maxLng: 21.0},
+      // Gulf of Finland
+      {minLat: 59.0, maxLat: 60.5, minLng: 23.0, maxLng: 28.0},
+      // Gulf of Riga
+      {minLat: 57.0, maxLat: 59.0, minLng: 22.0, maxLng: 24.5},
+      // Southern Baltic
+      {minLat: 54.5, maxLat: 56.0, minLng: 14.0, maxLng: 20.0}
+    ];
+    
+    // Helper function to check if a position is over water
+    const isOverWater = (lat, lng) => {
+      // Land areas to avoid
+      const landAreas = [
+        // Sweden mainland
+        {minLat: 55.3, maxLat: 63.0, minLng: 11.5, maxLng: 17.0},
+        // Finland mainland
+        {minLat: 60.0, maxLat: 65.5, minLng: 21.0, maxLng: 30.0},
+        // Estonia/Latvia/Lithuania mainland
+        {minLat: 56.0, maxLat: 59.5, minLng: 23.0, maxLng: 28.0},
+        // Poland mainland
+        {minLat: 53.5, maxLat: 54.8, minLng: 14.5, maxLng: 19.5},
+        // Denmark mainland
+        {minLat: 54.5, maxLat: 57.8, minLng: 8.0, maxLng: 12.5}
+      ];
+      
+      // Check if position is over land
+      for (const area of landAreas) {
+        if (lat >= area.minLat && lat <= area.maxLat && 
+            lng >= area.minLng && lng <= area.maxLng) {
+          return false; // Over land
+        }
+      }
+      
+      return true; // Not over land
+    };
+    
     // Generate 8 Russian drones (4 from each location)
     for (let i = 0; i < 8; i++) {
       const startLocation = droneStartingLocations[i % 2]; // Alternate between Kaliningrad and St. Petersburg
       
-      // Create a drone path over the Baltic Sea
+      // Select a safe water area
+      const safeWaterArea = balticSeaSafeWaters[i % balticSeaSafeWaters.length];
+      
+      // Generate position within safe waters
       let position;
-      if (i % 2 === 0) { // Kaliningrad drones
-        // Move toward central/northern Baltic
-        const offsetLng = (Math.random() * 4) - 3; // -3 to 1 longitude shift
-        const offsetLat = (Math.random() * 4) + 1;  // 1 to 5 latitude shift (north)
-        position = [startLocation[0] + offsetLng, startLocation[1] + offsetLat];
-      } else { // St. Petersburg drones
-        // Move toward central/western Baltic
-        const offsetLng = (Math.random() * 6) - 8; // -8 to -2 longitude shift (west)
-        const offsetLat = (Math.random() * 3) - 1.5; // -1.5 to 1.5 latitude shift
-        position = [startLocation[0] + offsetLng, startLocation[1] + offsetLat];
-      }
+      let attempts = 0;
+      
+      do {
+        if (i % 2 === 0) { // Kaliningrad drones
+          // Move toward central/northern Baltic
+          const offsetLng = (Math.random() * 4) - 3; // -3 to 1 longitude shift
+          const offsetLat = (Math.random() * 4) + 1;  // 1 to 5 latitude shift (north)
+          position = [startLocation[0] + offsetLng, startLocation[1] + offsetLat];
+        } else { // St. Petersburg drones
+          // Move toward central/western Baltic
+          const offsetLng = (Math.random() * 6) - 8; // -8 to -2 longitude shift (west)
+          const offsetLat = (Math.random() * 3) - 1.5; // -1.5 to 1.5 latitude shift
+          position = [startLocation[0] + offsetLng, startLocation[1] + offsetLat];
+        }
+        
+        // Fallback to safe water area after a few attempts
+        if (attempts > 5) {
+          const lngRange = safeWaterArea.maxLng - safeWaterArea.minLng;
+          const latRange = safeWaterArea.maxLat - safeWaterArea.minLat;
+          position = [
+            safeWaterArea.minLng + Math.random() * lngRange,
+            safeWaterArea.minLat + Math.random() * latRange
+          ];
+        }
+        
+        attempts++;
+      } while (!isOverWater(position[1], position[0]) && attempts < 10);
       
       // Calculate heading based on destination (simplified)
       const dx = position[0] - startLocation[0];
@@ -644,6 +726,15 @@ const BalticSeaTracker = () => {
         };
       }
       
+      // Third case: Russian flag commercial vessels - ensure they are marked as Russian Ships
+      if (vessel.flag === 'Russia' && (vessel.type === 'commercial' || vessel.type === 'tanker')) {
+        return {
+          ...vessel,
+          isRussian: true,
+          type: 'russian' // Categorize as "Russian Ships"
+        };
+      }
+      
       return vessel;
     });
     
@@ -664,8 +755,70 @@ const BalticSeaTracker = () => {
     // Skip if delta time is too large (e.g., browser tab was inactive)
     if (adjustedDeltaTime > 5) return;
     
+    // Define areas to avoid (major land masses)
+    const avoidAreas = [
+      // Sweden mainland
+      {minLat: 55.3, maxLat: 63.0, minLng: 11.5, maxLng: 17.0},
+      // Finland mainland
+      {minLat: 60.0, maxLat: 65.5, minLng: 21.0, maxLng: 30.0},
+      // Estonia/Latvia/Lithuania mainland
+      {minLat: 56.0, maxLat: 59.5, minLng: 23.0, maxLng: 28.0},
+      // Poland mainland
+      {minLat: 53.5, maxLat: 54.8, minLng: 14.5, maxLng: 19.5},
+      // Denmark mainland
+      {minLat: 54.5, maxLat: 57.8, minLng: 8.0, maxLng: 12.5}
+    ];
+    
+    // Check for stuck/frozen drones or vessels
+    const isStuck = (vessel) => {
+      // A vessel is considered "stuck" if:
+      // 1. It's a drone with a speed setting above 0 but is not moving
+      // 2. It's over land or outside the Baltic Sea region
+      if (vessel.type === 'drone' && vessel.speed > 0) {
+        // Check if it's over land or outside region
+        const isOverLand = avoidAreas.some(area => 
+          vessel.position[1] >= area.minLat && vessel.position[1] <= area.maxLat && 
+          vessel.position[0] >= area.minLng && vessel.position[0] <= area.maxLng
+        );
+        
+        // Check if outside Baltic Sea region
+        const isTooFarNorth = vessel.position[1] > 65.0;
+        const isTooFarSouth = vessel.position[1] < 54.0;
+        const isTooFarEast = vessel.position[0] > 30.0;
+        const isTooFarWest = vessel.position[0] < 10.0;
+        
+        return isOverLand || isTooFarNorth || isTooFarSouth || isTooFarEast || isTooFarWest;
+      }
+      return false;
+    };
+    
     setVessels(prevVessels => {
       return prevVessels.map(vessel => {
+        // Check if vessel is stuck first
+        if (isStuck(vessel)) {
+          // Calculate heading toward Baltic Sea center
+          const centerLat = 58.0;
+          const centerLng = 19.0;
+          let newHeading = Math.atan2(centerLng - vessel.position[0], centerLat - vessel.position[1]) * 180 / Math.PI;
+          if (newHeading < 0) newHeading += 360;
+          
+          // Calculate a new position moving toward Baltic Sea center
+          const emergencyHeadingRad = newHeading * Math.PI / 180;
+          const latAdjustment = Math.cos(vessel.position[1] * Math.PI / 180);
+          const emergencyLngChange = vessel.speed * 0.0003 * adjustedDeltaTime / latAdjustment;
+          const emergencyLatChange = vessel.speed * 0.0003 * adjustedDeltaTime;
+          
+          // Move toward Baltic Sea center
+          const emergencyNewLng = vessel.position[0] + (emergencyLngChange * Math.sin(emergencyHeadingRad));
+          const emergencyNewLat = vessel.position[1] + (emergencyLatChange * Math.cos(emergencyHeadingRad));
+          
+          return {
+            ...vessel,
+            position: [emergencyNewLng, emergencyNewLat],
+            heading: newHeading
+          };
+        }
+        
         // Skip stationary vessels
         if (vessel.speed === 0) return vessel;
         
@@ -728,9 +881,19 @@ const BalticSeaTracker = () => {
             newHeading = Math.atan2(centerLng - vessel.position[0], centerLat - vessel.position[1]) * 180 / Math.PI;
             if (newHeading < 0) newHeading += 360;
             
+            // Calculate a new position moving toward Baltic Sea center
+            const emergencyHeadingRad = newHeading * Math.PI / 180;
+            const emergencyLngChange = vessel.speed * 0.0003 * adjustedDeltaTime / droneLatAdjustment;
+            const emergencyLatChange = vessel.speed * 0.0003 * adjustedDeltaTime;
+            
+            // Move drone toward Baltic Sea center
+            const emergencyNewLng = vessel.position[0] + (emergencyLngChange * Math.sin(emergencyHeadingRad));
+            const emergencyNewLat = vessel.position[1] + (emergencyLatChange * Math.cos(emergencyHeadingRad));
+            
             // Make a more significant course correction if over land or outside boundaries
             return {
               ...vessel,
+              position: [emergencyNewLng, emergencyNewLat],
               heading: newHeading
             };
           }
@@ -1203,7 +1366,7 @@ const BalticSeaTracker = () => {
       let matchesFilter = filters.all;
       
       if (!matchesFilter) {
-        if (filters.commercial && v.type === 'commercial') matchesFilter = true;
+        if (filters.commercial && (v.type === 'commercial' || v.type === 'passenger' || v.type === 'tanker')) matchesFilter = true;
         if (filters.military && v.type === 'military') matchesFilter = true;
         if (filters.submarine && v.type === 'submarine') matchesFilter = true;
         if (filters.drone && v.type === 'drone') matchesFilter = true;
@@ -1819,8 +1982,10 @@ const BalticSeaTracker = () => {
     // Render medium vessels (GT 300-2999) with 20 NM radar
     if (showVesselRadar) {
       // Filter vessels to show radar only for commercial vessels with GT 300-2999
+      // Exclude Russian ships from having radar
       const mediumVessels = vessels.filter(v => 
         (v.type === 'commercial' || v.type === 'tanker' || v.type === 'passenger') && 
+        !v.isRussian && // Exclude Russian ships from having radar
         v.grossTonnage >= 300 && v.grossTonnage < 3000 &&
         isInMapBounds(v.position[1], v.position[0])
       );
@@ -1856,8 +2021,10 @@ const BalticSeaTracker = () => {
     // Render large vessels (GT >= 3000) with 40 NM radar
     if (showLargeVesselRadar) {
       // Filter vessels to show radar only for commercial vessels with GT >= 3000
+      // Exclude Russian ships from having radar
       const largeVessels = vessels.filter(v => 
         (v.type === 'commercial' || v.type === 'tanker' || v.type === 'passenger') && 
+        !v.isRussian && // Exclude Russian ships from having radar
         v.grossTonnage >= 3000 &&
         isInMapBounds(v.position[1], v.position[0])
       );
@@ -2147,7 +2314,7 @@ const BalticSeaTracker = () => {
   const visibleVesselCount = useMemo(() => 
     vessels.filter(v => {
       const matchesFilter = filters.all || 
-                         (filters.commercial && v.type === 'commercial') || 
+                         (filters.commercial && (v.type === 'commercial' || v.type === 'passenger' || v.type === 'tanker')) || 
                          (filters.military && v.type === 'military') || 
                          (filters.submarine && v.type === 'submarine') || 
                          (filters.drone && v.type === 'drone') || 
@@ -2160,7 +2327,7 @@ const BalticSeaTracker = () => {
   const displayedVessels = useMemo(() => 
     vessels.filter(v => {
       const matchesFilter = filters.all || 
-                          (filters.commercial && v.type === 'commercial') || 
+                          (filters.commercial && (v.type === 'commercial' || v.type === 'passenger' || v.type === 'tanker')) || 
                           (filters.military && v.type === 'military') || 
                           (filters.submarine && v.type === 'submarine') || 
                           (filters.drone && v.type === 'drone') || 
@@ -2370,7 +2537,7 @@ const BalticSeaTracker = () => {
             }}
           >
             <Radar size={16} className="mr-1" />
-            SeaMesh
+            Sea Mesh
           </button>
         </div>
       </div>
@@ -2714,7 +2881,7 @@ const BalticSeaTracker = () => {
             filters.all ? 
               vessels.length : 
               vessels.filter(v => 
-                (filters.commercial && v.type === 'commercial') || 
+                (filters.commercial && (v.type === 'commercial' || v.type === 'passenger' || v.type === 'tanker')) || 
                 (filters.military && v.type === 'military') || 
                 (filters.submarine && v.type === 'submarine') || 
                 (filters.drone && v.type === 'drone') || 
@@ -2724,7 +2891,7 @@ const BalticSeaTracker = () => {
           {showWindFarms && <span className="mx-1 text-amber-400">| Wind Farms Shown</span>}
           {showRadarCoverage && showWindFarms && <span className="mx-1 text-red-400">| Radar Coverage (42 NM)</span>}
           {showVesselRadar && <span className="mx-1 text-blue-400">| Vessel Radar (20/40 NM)</span>}
-          {showSeaMesh && <span className="mx-1 text-orange-400">| SeaMesh Active</span>}
+          {showSeaMesh && <span className="mx-1 text-orange-400">| Sea Mesh Active</span>}
           {showAirMesh && <span className="mx-1 text-purple-400">| AirMesh Active</span>}
           {simulationEnabled && <span className="mx-1 text-green-400">| Vessel Movement ({simulationSpeed}x)</span>}
         </div>
